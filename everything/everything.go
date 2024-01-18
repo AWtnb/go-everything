@@ -15,7 +15,7 @@ func Scan(query string) []string {
 		fmt.Println(err)
 		return sl
 	}
-	core.Walk(query, func(path string, info core.FileInfo, err error) error {
+	core.Walk(query, func(path string, err error) error {
 		sl = append(sl, path)
 		return nil
 	})

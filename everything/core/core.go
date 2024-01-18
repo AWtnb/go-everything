@@ -191,21 +191,8 @@ func init() {
 	}
 }
 
-// FileInfo resemble os.FileInfo
-type FileInfo struct {
-	name    string
-	size    int64
-	modTime time.Time
-	isDir   bool
-}
-
-func (fi *FileInfo) Name() string       { return fi.name }
-func (fi *FileInfo) Size() int64        { return fi.size }
-func (fi *FileInfo) ModTime() time.Time { return fi.modTime }
-func (fi *FileInfo) IsDir() bool        { return fi.isDir }
-
 // WalkFunc is the type of the function called for each file or directory visited by Walk.
-type WalkFunc func(path string, info FileInfo, err error) error
+type WalkFunc func(path string, err error) error
 
 // Walk calling walkFn for each file or directory in queried resulr
 func Walk(root string, walkFn WalkFunc) error {
@@ -214,12 +201,8 @@ func Walk(root string, walkFn WalkFunc) error {
 	Query(true)
 	num := GetNumResults()
 	for i := 0; i < num; i++ {
-		var fi FileInfo
-		fi.name = GetResultFullPathName(i)
-		fi.size = GetResultSize(i)
-		fi.modTime = GetResultDateModified(i)
-		fi.isDir = IsFolderResult(i)
-		err := walkFn(fi.name, fi, nil)
+		p := GetResultFullPathName(i)
+		err := walkFn(p, nil)
 		if err != nil {
 			return err
 		}
