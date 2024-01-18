@@ -21,13 +21,10 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	everything.Walk(query, func(path string, info everything.FileInfo, err error) error {
-		name := filepath.Base(path)
-		size := info.Size()
-		tmod := info.ModTime()
-		fmt.Println(name, size, tmod.Format("2006-01-02 15:04"))
-		return nil
-	})
+	paths := everything.Scan(query)
+	for _, p := range paths {
+		fmt.Println(p)
+	}
 }
 
 func getExeDir() string {
