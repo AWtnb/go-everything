@@ -2,20 +2,21 @@
 package everything
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/AWtnb/go-win-everything/everything/core"
 )
 
-func Scan(query string) []string {
+func Scan(query string, skipFile bool) []string {
 	sl := []string{}
 	if err := checkDll("Everything64.dll"); err != nil {
-		fmt.Println(err)
 		return sl
 	}
-	core.Walk(query, func(path string, err error) error {
+	core.Walk(query, skipFile, func(path string, isFile bool) error {
+		if skipFile && isFile {
+			return nil
+		}
 		sl = append(sl, path)
 		return nil
 	})
