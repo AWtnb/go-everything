@@ -6,7 +6,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/AWtnb/go-win-everything/everything"
@@ -22,12 +21,12 @@ func main() {
 	flag.BoolVar(&skipFile, "skipFile", false, "switch to skip file")
 	flag.StringVar(&exclude, "exclude", "", "search exception (comma-separated)")
 	flag.Parse()
-	if err := checkDll("Everything64.dll"); err != nil {
-		fmt.Println(err)
+	var res EverythingResult
+	found, err := everything.Scan(query, skipFile)
+	if err != nil {
 		return
 	}
-	var res EverythingResult
-	res.paths = everything.Scan(query, skipFile)
+	res.paths = found
 	res.exclude = toSlice(exclude, ",")
 	for _, p := range res.filtered() {
 		fmt.Println(p)
@@ -74,18 +73,4 @@ func toSlice(s string, sep string) []string {
 		ss = append(ss, strings.TrimSpace(elem))
 	}
 	return ss
-}
-
-func getExeDir() string {
-	if exePath, err := os.Executable(); err != nil {
-		return exePath
-	}
-	return ""
-}
-
-func checkDll(name string) error {
-	exeDir := getExeDir()
-	path := filepath.Join(exeDir, name)
-	_, err := os.Stat(path)
-	return err
 }
