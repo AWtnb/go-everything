@@ -1,3 +1,3 @@
-module github.com/AWtnb/go-win-everything
+module github.com/AWtnb/go-everything
 
 go 1.21.1
