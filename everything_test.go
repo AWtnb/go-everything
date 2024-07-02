@@ -7,7 +7,7 @@ import (
 )
 
 func TestEverything(t *testing.T) {
-	found, err := everything.Scan(`C:\Personal\gotemp`, false)
+	found, err := everything.Scan(`C:\Personal\go temp`, false)
 	if err != nil {
 		t.Error(err)
 		return
