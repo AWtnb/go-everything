@@ -1,9 +1,11 @@
 // https://github.com/jof4002/Everything/blob/master/everything_windows_amd64.go
 
-package everything
+package core
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 	"syscall"
 	"unsafe"
 )
@@ -99,17 +101,17 @@ type WalkFunc func(path string, isFile bool) error
 
 // calling walkFn for each file or directory in queried result
 func Walk(root string, skipFile bool, walkFn WalkFunc) error {
-	err := SetSearch(root)
+	err := setSearch(root)
 	if err != nil {
 		return err
 	}
-	SetRequestFlags(EVERYTHING_REQUEST_FILE_NAME | EVERYTHING_REQUEST_PATH)
-	SetSort(EVERYTHING_SORT_PATH_ASCENDING)
-	Query(true)
-	num := GetNumResults()
+	setRequestFlags(EVERYTHING_REQUEST_FILE_NAME | EVERYTHING_REQUEST_PATH)
+	setSort(EVERYTHING_SORT_PATH_ASCENDING)
+	query(true)
+	num := getNumResults()
 	for i := 0; i < num; i++ {
-		fullname := GetResultFullPathName(i)
-		isFile := IsFileResult(i)
+		fullname := getResultFullPathName(i)
+		isFile := isFileResult(i)
 		err := walkFn(fullname, isFile)
 		if err != nil {
 			return err
@@ -119,13 +121,16 @@ func Walk(root string, skipFile bool, walkFn WalkFunc) error {
 
 }
 
-// SetSearch void Everything_SetSearchW(LPCWSTR lpString);
-func SetSearch(str string) error {
+// setSearch void Everything_SetSearchW(LPCWSTR lpString);
+func setSearch(str string) error {
 	if Everything_SetSearch == nil {
-		return fmt.Errorf("failed to load dll")
+		return errors.New("failed to set search query")
 	}
 	if err := Everything_SetSearch.Find(); err != nil {
 		return err
+	}
+	if strings.Contains(str, " ") {
+		str = fmt.Sprintf("\"%s\"", str)
 	}
 	p, err := syscall.UTF16PtrFromString(str)
 	if err != nil {
@@ -135,22 +140,22 @@ func SetSearch(str string) error {
 	return nil
 }
 
-// SetRequestFlags void Everything_SetRequestFlags(DWORD dwRequestFlags); // Everything 1.4.1
-func SetRequestFlags(flags int) {
+// setRequestFlags void Everything_SetRequestFlags(DWORD dwRequestFlags); // Everything 1.4.1
+func setRequestFlags(flags int) {
 	if Everything_SetRequestFlags != nil {
 		Everything_SetRequestFlags.Call(uintptr(flags))
 	}
 }
 
-// SetSort void Everything_SetSort(DWORD dwSort); // Everything 1.4.1
-func SetSort(sortMode int) {
+// setSort void Everything_SetSort(DWORD dwSort); // Everything 1.4.1
+func setSort(sortMode int) {
 	if Everything_SetSort != nil {
 		Everything_SetSort.Call(uintptr(sortMode))
 	}
 }
 
-// Query BOOL Everything_QueryW(BOOL bWait);
-func Query(bWait bool) bool {
+// query BOOL Everything_QueryW(BOOL bWait);
+func query(bWait bool) bool {
 	if Everything_Query != nil {
 		var param int
 		if bWait {
@@ -162,8 +167,8 @@ func Query(bWait bool) bool {
 	return false
 }
 
-// GetNumResults DWORD Everything_GetNumResults(void);
-func GetNumResults() int {
+// getNumResults DWORD Everything_GetNumResults(void);
+func getNumResults() int {
 	if Everything_GetNumResults != nil {
 		r, _, _ := Everything_GetNumResults.Call()
 		return int(r)
@@ -171,8 +176,8 @@ func GetNumResults() int {
 	return 0
 }
 
-// GetResultFullPathName DWORD Everything_GetResultFullPathNameW(DWORD dwIndex,LPWSTR wbuf,DWORD wbuf_size_in_wchars);
-func GetResultFullPathName(index int) string {
+// getResultFullPathName DWORD Everything_GetResultFullPathNameW(DWORD dwIndex,LPWSTR wbuf,DWORD wbuf_size_in_wchars);
+func getResultFullPathName(index int) string {
 	if Everything_GetResultFullPathName != nil {
 		var pathbuf = make([]uint16, 1024)
 		Everything_GetResultFullPathName.Call(uintptr(index), uintptr(unsafe.Pointer(&pathbuf[0])), 1023) // bufsize-1
@@ -181,17 +186,8 @@ func GetResultFullPathName(index int) string {
 	return ""
 }
 
-// IsFolderResult BOOL Everything_IsFolderResult(DWORD dwIndex);
-func IsFolderResult(index int) (ret bool) {
-	if Everything_IsFolderResult != nil {
-		r, _, _ := Everything_IsFolderResult.Call(uintptr(index))
-		ret = r != 0
-	}
-	return
-}
-
-// IsFileResult BOOL Everything_IsFileResult(DWORD dwIndex);
-func IsFileResult(index int) bool {
+// isFileResult BOOL Everything_IsFileResult(DWORD dwIndex);
+func isFileResult(index int) bool {
 	if Everything_IsFileResult != nil {
 		r, _, _ := Everything_IsFileResult.Call(uintptr(index))
 		return r != 0

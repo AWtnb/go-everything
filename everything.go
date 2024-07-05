@@ -2,14 +2,11 @@
 package everything
 
 import (
-	"strings"
+	"github.com/AWtnb/go-everything/core"
 )
 
 func Scan(query string, skipFile bool) (sl []string, err error) {
-	if strings.Contains(query, " ") {
-		query = "\"" + query + "\""
-	}
-	err = Walk(query, skipFile, func(path string, isFile bool) error {
+	err = core.Walk(query, skipFile, func(path string, isFile bool) error {
 		if skipFile && isFile {
 			return nil
 		}
